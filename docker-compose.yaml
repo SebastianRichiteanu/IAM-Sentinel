@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  neo4j:
+    image: neo4j:5-community
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - ./neo4j/plugins:/plugins
+    environment:
+      NEO4J_AUTH: neo4j/sentinel
+      # maybe raise limits and/or import apoc
