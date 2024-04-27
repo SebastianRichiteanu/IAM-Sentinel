@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	queryPurgeDB = "MATCH(n) DETACH DELETE(n)"
+	queryPurgeDB        = "MATCH(n) DETACH DELETE(n)"
+	createKeyConstraint = "CREATE CONSTRAINT FOR (n) REQUIRE n.key IS UNIQUE;"
 
 	timeout = time.Second * 30
 )
@@ -72,6 +73,12 @@ func (neo Neo4jConn) PurgeDB(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not purge neo4j db: %w", err)
 	}
+
+	// _, err = neo.ExecuteQueryWrite(ctx, createKeyConstraint, nil)
+	// if err != nil {
+	// 	return fmt.Errorf("could not create key constraint: %w", err)
+	// }
+
 	return nil
 }
 

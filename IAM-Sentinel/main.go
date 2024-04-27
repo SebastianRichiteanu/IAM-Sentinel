@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"os"
 )
 
 func main() {
@@ -22,17 +22,23 @@ func main() {
 		panic(err)
 	}
 
-	what, err := db.ExecuteQueryWrite(ctx, "CREATE (charlie:Person:Actor {name: 'Charlie Sheen'}), (oliver:Person:Director {name: 'Oliver Stone'})", nil)
+	parser, err := NewParser()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%#v\n", what)
-
-	count, err := db.ExecuteQueryRead(ctx, "match(n) return count(n)", nil)
+	data, err := os.ReadFile("example.json")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%#v", count[0])
+	mapper, err := NewResourceMapper(db, parser)
+	if err != nil {
+		panic(err)
+	}
+
+	if err = mapper.MapFile(ctx, data); err != nil {
+		panic(err)
+	}
+
 }

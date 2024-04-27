@@ -1,2 +1,4 @@
+github.com/aws/aws-sdk-go v1.51.30 h1:RVFkjn9P0JMwnuZCVH0TlV5k9zepHzlbc4943eZMhGw=
+github.com/aws/aws-sdk-go v1.51.30/go.mod h1:LF8svs817+Nz+DmiMQKTO3ubZ/6IaTpq3TjupRn3Eqk=
 github.com/neo4j/neo4j-go-driver/v5 v5.19.0 h1:v2cB19fZQYz1xmj6EZXofFHD/+Tj16hH/OOp39uNN1I=
 github.com/neo4j/neo4j-go-driver/v5 v5.19.0/go.mod h1:Vff8OwT7QpLm7L2yYr85XNWe9Rbqlbeb9asNXJTHO4k=
