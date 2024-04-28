@@ -9,10 +9,17 @@ import (
 )
 
 const (
-	queryPurgeDB        = "MATCH(n) DETACH DELETE(n)"
-	createKeyConstraint = "CREATE CONSTRAINT FOR (n) REQUIRE n.key IS UNIQUE;"
+	queryPurgeDB           = "MATCH(n) DETACH DELETE(n)"
+	createUserConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:User) REQUIRE n.key IS UNIQUE;"
+	createRoleConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Role) REQUIRE n.key IS UNIQUE;"
+	createPolicyConstraint = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Policy) REQUIRE n.key IS UNIQUE;"
+	createGroupConstraint  = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Group) REQUIRE n.key IS UNIQUE;"
 
 	timeout = time.Second * 30
+)
+
+var (
+	createConstraints = []string{createUserConstraint, createRoleConstraint, createPolicyConstraint, createGroupConstraint}
 )
 
 type Neo4jConn struct {
@@ -74,10 +81,12 @@ func (neo Neo4jConn) PurgeDB(ctx context.Context) error {
 		return fmt.Errorf("could not purge neo4j db: %w", err)
 	}
 
-	// _, err = neo.ExecuteQueryWrite(ctx, createKeyConstraint, nil)
-	// if err != nil {
-	// 	return fmt.Errorf("could not create key constraint: %w", err)
-	// }
+	for _, constraint := range createConstraints {
+		_, err = neo.ExecuteQueryWrite(ctx, constraint, nil)
+		if err != nil {
+			return fmt.Errorf("could not create key constraint: %w", err)
+		}
+	}
 
 	return nil
 }

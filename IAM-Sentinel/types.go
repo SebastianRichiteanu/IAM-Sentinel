@@ -21,7 +21,7 @@ type (
 		InstanceProfileList      any // TODO
 		RoleName                 string
 		Path                     string
-		AttachedManagedPolicies  []any // TODO
+		AttachedManagedPolicies  []ManagedPolicy
 		RoleLastUsed             any   // TODO
 		RolePolicyList           []any // TODO
 		Arn                      string
@@ -32,15 +32,15 @@ type (
 		GroupList               []string
 		CreateDate              time.Time
 		UserID                  string
-		UserPolicyList          any      // TODO
-		Path                    string   // ????
-		AttachedManagedPolicies []string // ???
+		UserPolicyList          any    // TODO
+		Path                    string // ????
+		AttachedManagedPolicies []ManagedPolicy
 		Arn                     string
 	}
 
 	GroupDetail struct {
 		GroupID                 string
-		AttachedManagedPolicies any // TODO: tighten to policy
+		AttachedManagedPolicies []ManagedPolicy
 		GroupName               string
 		Path                    string
 		Arn                     string
@@ -49,15 +49,21 @@ type (
 	}
 
 	Policy struct { // maybe name PolicyDetail?
+		// maybe switch to pointer to have default nil?
 		PolicyName        string
 		CreateDate        time.Time
 		AttachmentCount   int
 		IsAttachable      bool
 		PolicyId          string
-		DefaultVersionId  string // what? "v1"
-		PolicyVersionList any    // TODO
+		DefaultVersionId  string
+		PolicyVersionList any // TODO
 		Path              string
 		Arn               string
 		UpdateDate        time.Time
+	}
+
+	ManagedPolicy struct {
+		PolicyName string
+		PolicyArn  string
 	}
 )
