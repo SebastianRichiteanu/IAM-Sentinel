@@ -32,6 +32,11 @@ func (m *ResourceMapper) MapFile(ctx context.Context, data []byte) error {
 
 func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 	for _, user := range users {
+		var managedPolicies []Policy
+		for _, policy := range user.AttachedManagedPolicies {
+			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
+		}
+		m.mapPolicies(ctx, managedPolicies)
 		// TODO: idk if I should add groups (and policies) here, probably just ->[:IS_PART_OF] or whatever
 		// probably create them before and in create user just link :D
 
@@ -66,6 +71,11 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 
 func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 	for _, group := range groups {
+		var managedPolicies []Policy
+		for _, policy := range group.AttachedManagedPolicies {
+			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
+		}
+		m.mapPolicies(ctx, managedPolicies)
 		// TODO: idk if I should add policies here, probably just ->[:IS_PART_OF] or whatever
 		// probably create them before and in create user just link :D
 
@@ -135,6 +145,12 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 
 func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 	for _, role := range roles {
+		var managedPolicies []Policy
+		for _, policy := range role.AttachedManagedPolicies {
+			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
+		}
+		m.mapPolicies(ctx, managedPolicies)
+
 		// TODO: idk if I should add policies here, probably just ->[:IS_PART_OF] or whatever
 		// probably create them before and in create user just link :D
 
@@ -147,7 +163,6 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		`
 		// TODO: AssumeRolePolicyDocument
 		// InstanceProfileList
-		// AttachedManagedPolicies
 		// RoleLastUsed
 		// RolePolicyList
 
