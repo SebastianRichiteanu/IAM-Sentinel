@@ -3,10 +3,22 @@ package main
 import (
 	"context"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
+
+func initLogger() *log.Logger {
+	logger := log.New()
+	logger.Out = os.Stdout
+	logger.Level = log.InfoLevel
+	return logger
+}
 
 func main() {
 	ctx := context.Background()
+	logger := initLogger()
+
+	logger.Info("Starting...")
 
 	db, err := InitializeDB(ctx, Neo4jConfig{
 		uri:      "bolt://localhost:7687",
@@ -22,7 +34,7 @@ func main() {
 		panic(err)
 	}
 
-	parser, err := NewParser()
+	parser, err := NewParser(logger)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +44,7 @@ func main() {
 		panic(err)
 	}
 
-	mapper, err := NewResourceMapper(db, parser)
+	mapper, err := NewResourceMapper(logger, db, parser)
 	if err != nil {
 		panic(err)
 	}
@@ -40,5 +52,4 @@ func main() {
 	if err = mapper.MapFile(ctx, data); err != nil {
 		panic(err)
 	}
-
 }

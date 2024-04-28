@@ -1,14 +1,20 @@
 package main
 
-import "context"
+import (
+	"context"
+
+	"github.com/sirupsen/logrus"
+)
 
 type ResourceMapper struct {
+	logger *logrus.Logger
 	dbConn *Neo4jConn
 	parser *Parser
 }
 
-func NewResourceMapper(db *Neo4jConn, parser *Parser) (*ResourceMapper, error) {
+func NewResourceMapper(logger *logrus.Logger, db *Neo4jConn, parser *Parser) (*ResourceMapper, error) {
 	m := ResourceMapper{
+		logger: logger,
 		dbConn: db,
 		parser: parser,
 	}
@@ -41,7 +47,7 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 		// probably create them before and in create user just link :D
 
 		query := `
-		MERGE (user:User {key : $arn})
+		MERGE (user:User {arn : $arn})
 			SET user.UserName = $userName
 			SET user.GroupList = $groups 
 			SET user.UserID = $userID
@@ -63,8 +69,7 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
-			// change this to a logger
-			panic(err)
+			m.logger.WithFields(logrus.Fields{"arn": user.Arn}).Error(err)
 		}
 	}
 }
@@ -80,7 +85,7 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 		// probably create them before and in create user just link :D
 
 		query := `
-		MERGE (user:Group {key : $arn})
+		MERGE (user:Group {arn : $arn})
 			SET user.GroupID = $groupID
 			SET user.GroupName = $groupName 
 			SET user.Path = $path
@@ -100,8 +105,7 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
-			// change this to a logger
-			panic(err)
+			m.logger.WithFields(logrus.Fields{"arn": group.Arn}).Error(err)
 		}
 	}
 }
@@ -112,7 +116,7 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 		// probably create them before and in create user just link :D
 
 		query := `
-		MERGE (policy:Policy {key : $arn})
+		MERGE (policy:Policy {arn : $arn})
 			SET policy.PolicyID = $policyID
 			SET policy.PolicyName = $policyName 
 			SET policy.Path = $path
@@ -137,8 +141,7 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
-			// change this to a logger
-			panic(err)
+			m.logger.WithFields(logrus.Fields{"arn": policy.Arn}).Error(err)
 		}
 	}
 }
@@ -155,7 +158,7 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		// probably create them before and in create user just link :D
 
 		query := `
-		MERGE (role:Role {key : $arn})
+		MERGE (role:Role {arn : $arn})
 			SET role.RoleID = $roleID
 			SET role.RoleName = $roleName 
 			SET role.Path = $path
@@ -175,8 +178,7 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
-			// change this to a logger
-			panic(err)
+			m.logger.WithFields(logrus.Fields{"arn": role.Arn}).Error(err)
 		}
 	}
 }
