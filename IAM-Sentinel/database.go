@@ -10,10 +10,10 @@ import (
 
 const (
 	queryPurgeDB           = "MATCH(n) DETACH DELETE(n)"
-	createUserConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:User) REQUIRE n.key IS UNIQUE;"
-	createRoleConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Role) REQUIRE n.key IS UNIQUE;"
-	createPolicyConstraint = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Policy) REQUIRE n.key IS UNIQUE;"
-	createGroupConstraint  = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Group) REQUIRE n.key IS UNIQUE;"
+	createUserConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:User) REQUIRE n.arn IS UNIQUE;"
+	createRoleConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Role) REQUIRE n.arn IS UNIQUE;"
+	createPolicyConstraint = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Policy) REQUIRE n.arn IS UNIQUE;"
+	createGroupConstraint  = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Group) REQUIRE n.arn IS UNIQUE;"
 
 	timeout = time.Second * 30
 )
