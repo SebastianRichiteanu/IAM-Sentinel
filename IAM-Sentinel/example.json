@@ -10,7 +10,7 @@
                         "Principal": {
                             "Service": "ec2.amazonaws.com"
                         },
-                        "Action": "sts:AssumeRole"
+                        "Action": ["sts:AssumeRole"]
                     }
                 ]
             },
@@ -30,7 +30,7 @@
                                         "Principal": {
                                             "Service": "ec2.amazonaws.com"
                                         },
-                                        "Action": "sts:AssumeRole"
+                                        "Action": ["sts:AssumeRole"]
                                     }
                                 ]
                             },
@@ -106,17 +106,17 @@
             "GroupPolicyList": [
                 {
                     "PolicyName": "policygen-201310141157",
-                    "PolicyDocument": {
+                    "PolicyDocument": [{
                         "Version": "2012-10-17",
                         "Statement": [
                             {
-                                "Action": "aws-portal:*",
+                                "Action": ["aws-portal:*"],
                                 "Sid": "Stmt1381777017000",
                                 "Resource": "*",
                                 "Effect": "Allow"
                             }
                         ]
-                    }
+                    }]
                 }
             ]
         }
@@ -144,17 +144,17 @@
             "UserPolicyList": [
                 {
                     "PolicyName": "DenyBillingAndIAMPolicy",
-                    "PolicyDocument": {
+                    "PolicyDocument": [{
                         "Version": "2012-10-17",
-                        "Statement": {
+                        "Statement": [{
                             "Effect": "Deny",
                             "Action": [
                                 "aws-portal:*",
                                 "iam:*"
                             ],
                             "Resource": "*"
-                        }
-                    }
+                        }]
+                    }]
                 }
             ],
             "Path": "/",
@@ -186,9 +186,9 @@
                 {
                     "CreateDate": "2015-02-06T19:58:34Z",
                     "VersionId": "v1",
-                    "Document": {
+                    "Document": [{
                         "Version": "2012-10-17",
-                        "Statement": {
+                        "Statement": [{
                             "Effect": "Allow",
                             "Action": [
                                 "iam:CreatePolicy",
@@ -202,8 +202,8 @@
                                 "iam:SetDefaultPolicyVersion"
                             ],
                             "Resource": "*"
-                        }
-                    },
+                        }]
+                    }],
                     "IsDefaultVersion": true
                 }
             ],
@@ -222,7 +222,7 @@
                 {
                     "CreateDate": "2015-01-21T21:39:41Z",
                     "VersionId": "v1",
-                    "Document": {
+                    "Document": [{
                         "Version": "2012-10-17",
                         "Statement": [
                             {
@@ -237,7 +237,7 @@
                                 ]
                             }
                         ]
-                    },
+                    }],
                     "IsDefaultVersion": true
                 }
             ],
@@ -256,31 +256,31 @@
                 {
                     "CreateDate": "2014-10-30T20:59:46Z",
                     "VersionId": "v1",
-                    "Document": {
+                    "Document": [{
                         "Version": "2012-10-17",
                         "Statement": [
                             {
-                                "Action": "ec2:*",
+                                "Action": ["ec2:*"],
                                 "Effect": "Allow",
                                 "Resource": "*"
                             },
                             {
                                 "Effect": "Allow",
-                                "Action": "elasticloadbalancing:*",
+                                "Action": ["elasticloadbalancing:*"],
                                 "Resource": "*"
                             },
                             {
                                 "Effect": "Allow",
-                                "Action": "cloudwatch:*",
+                                "Action": ["cloudwatch:*"],
                                 "Resource": "*"
                             },
                             {
                                 "Effect": "Allow",
-                                "Action": "autoscaling:*",
+                                "Action": ["autoscaling:*"],
                                 "Resource": "*"
                             }
                         ]
-                    },
+                    }],
                     "IsDefaultVersion": true
                 }
             ],

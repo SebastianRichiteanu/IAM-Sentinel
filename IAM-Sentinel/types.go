@@ -15,16 +15,30 @@ type (
 	}
 
 	RoleDetail struct {
-		AssumeRolePolicyDocument any // TODO
+		AssumeRolePolicyDocument PolicyDocument
 		RoleID                   string
 		CreateDate               time.Time
-		InstanceProfileList      any // TODO
+		InstanceProfileList      []Profile
 		RoleName                 string
 		Path                     string
 		AttachedManagedPolicies  []ManagedPolicy
-		RoleLastUsed             any   // TODO
-		RolePolicyList           []any // TODO
+		RoleLastUsed             LastUsed
+		RolePolicyList           []ManagedPolicy
 		Arn                      string
+	}
+
+	Profile struct {
+		InstanceProfileId   string
+		Roles               []RoleDetail
+		CreateDate          time.Time
+		InstanceProfilename string
+		Path                string
+		Arn                 string
+	}
+
+	LastUsed struct {
+		Region       string
+		LastUsedDate time.Time
 	}
 
 	UserDetail struct {
@@ -32,8 +46,8 @@ type (
 		GroupList               []string
 		CreateDate              time.Time
 		UserID                  string
-		UserPolicyList          any    // TODO
-		Path                    string // ????
+		UserPolicyList          []ManagedPolicy
+		Path                    string
 		AttachedManagedPolicies []ManagedPolicy
 		Arn                     string
 	}
@@ -45,7 +59,7 @@ type (
 		Path                    string
 		Arn                     string
 		CreateDate              time.Time
-		GroupPolicyList         []any // TODO: tighten to policy
+		GroupPolicyList         []ManagedPolicy
 	}
 
 	Policy struct { // maybe name PolicyDetail?
@@ -56,14 +70,42 @@ type (
 		IsAttachable      bool
 		PolicyId          string
 		DefaultVersionId  string
-		PolicyVersionList any // TODO
+		PolicyVersionList []PolicyVersion
 		Path              string
 		Arn               string
 		UpdateDate        time.Time
 	}
 
 	ManagedPolicy struct {
-		PolicyName string
-		PolicyArn  string
+		PolicyName     string
+		PolicyArn      string
+		PolicyDocument *[]PolicyDocument
+	}
+
+	PolicyVersion struct {
+		CreateDate       time.Time
+		VersionID        string
+		IsDefaultVersion bool
+		Document         []PolicyDocument
+	}
+
+	PolicyDocument struct {
+		Version   string
+		Statement []PolicyStatement
+	}
+
+	PolicyStatement struct {
+		Sid       string
+		Effect    string
+		Principal any // Prinicpal or string :(
+		Action    []string
+	}
+
+	// It can be a star also :(
+	Principal struct {
+		Service       string
+		AWS           string
+		Federated     string
+		CanonicalUser string
 	}
 )
