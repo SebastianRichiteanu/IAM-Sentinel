@@ -62,8 +62,7 @@ type (
 		GroupPolicyList         []ManagedPolicy
 	}
 
-	Policy struct { // maybe name PolicyDetail?
-		// maybe switch to pointer to have default nil?
+	Policy struct {
 		PolicyName        string
 		CreateDate        time.Time
 		AttachmentCount   int

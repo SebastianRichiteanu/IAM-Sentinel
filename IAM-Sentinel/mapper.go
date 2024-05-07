@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
@@ -27,11 +28,11 @@ func (m *ResourceMapper) MapFile(ctx context.Context, data []byte) error {
 		return err
 	}
 
-	// TODO: This should be go func() but after it's stable enough :( or create var for PARALLEL?
 	m.mapGroups(ctx, gaad.GroupDetailList)
 	m.mapUsers(ctx, gaad.UserDetailList)
 	m.mapRoles(ctx, gaad.RoleDetailList)
 	m.mapPolicies(ctx, gaad.Policies)
+	m.mapRelationships(ctx)
 
 	return nil
 }
@@ -42,9 +43,16 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 		for _, policy := range user.AttachedManagedPolicies {
 			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
 		}
+		for _, policy := range user.UserPolicyList {
+			arn := policy.PolicyArn
+			if arn == "" {
+				// if no arn, use name as key
+				arn = policy.PolicyName
+			}
+			managedPolicies = append(managedPolicies, Policy{Arn: arn, PolicyName: policy.PolicyName})
+		}
+
 		m.mapPolicies(ctx, managedPolicies)
-		// TODO: idk if I should add groups (and policies) here, probably just ->[:IS_PART_OF] or whatever
-		// probably create them before and in create user just link :D
 
 		query := `
 		MERGE (user:User {arn : $arn})
@@ -54,8 +62,6 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 			SET user.Path = $path
 			SET user.CreateDate = $createDate
 		`
-		// SET user.ManagedPolicies = $managedPolicies
-		// SET user.PolicyList = $policyList
 
 		params := map[string]any{
 			"arn":        user.Arn,
@@ -64,12 +70,22 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 			"userID":     user.UserID,
 			"path":       user.Path,
 			"createDate": user.CreateDate,
-			//"managedPolicies": user.AttachedManagedPolicies,
-			//"policyList":      user.UserPolicyList,
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
 			m.logger.WithFields(logrus.Fields{"arn": user.Arn}).Error(err)
+		}
+
+		m.mapEntityPolicies(ctx, user.Arn, managedPolicies)
+
+		for _, version := range user.UserPolicyList {
+			for _, document := range *version.PolicyDocument {
+				for _, statement := range document.Statement {
+					for _, action := range statement.Action {
+						m.mapAction(ctx, "TRUSTS", user.Arn, action, statement.Effect)
+					}
+				}
+			}
 		}
 	}
 }
@@ -80,19 +96,24 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 		for _, policy := range group.AttachedManagedPolicies {
 			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
 		}
+		for _, policy := range group.GroupPolicyList {
+			arn := policy.PolicyArn
+			if arn == "" {
+				// if no arn, use name as key
+				arn = policy.PolicyName
+			}
+			managedPolicies = append(managedPolicies, Policy{Arn: arn, PolicyName: policy.PolicyName})
+		}
+
 		m.mapPolicies(ctx, managedPolicies)
-		// TODO: idk if I should add policies here, probably just ->[:IS_PART_OF] or whatever
-		// probably create them before and in create user just link :D
 
 		query := `
-		MERGE (user:Group {arn : $arn})
-			SET user.GroupID = $groupID
-			SET user.GroupName = $groupName 
-			SET user.Path = $path
-			SET user.CreateDate = $createDate
+		MERGE (group:Group {arn : $arn})
+			SET group.GroupID = $groupID
+			SET group.GroupName = $groupName 
+			SET group.Path = $path
+			SET group.CreateDate = $createDate
 		`
-		// SET user.ManagedPolicies = $managedPolicies
-		// SET user.PolicyList = $policyList
 
 		params := map[string]any{
 			"arn":        group.Arn,
@@ -100,21 +121,28 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 			"groupName":  group.GroupName,
 			"path":       group.Path,
 			"createDate": group.CreateDate,
-			//"managedPolicies": user.AttachedManagedPolicies,
-			//"policyList":      user.UserPolicyList,
 		}
 
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
 			m.logger.WithFields(logrus.Fields{"arn": group.Arn}).Error(err)
+		}
+
+		m.mapEntityPolicies(ctx, group.Arn, managedPolicies)
+
+		for _, version := range group.GroupPolicyList {
+			for _, document := range *version.PolicyDocument {
+				for _, statement := range document.Statement {
+					for _, action := range statement.Action {
+						m.mapAction(ctx, "TRUSTS", group.Arn, action, statement.Effect)
+					}
+				}
+			}
 		}
 	}
 }
 
 func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 	for _, policy := range policies {
-		// TODO: idk if I should add policies here, probably just ->[:IS_PART_OF] or whatever
-		// probably create them before and in create user just link :D
-
 		query := `
 		MERGE (policy:Policy {arn : $arn})
 			SET policy.PolicyID = $policyID
@@ -126,7 +154,6 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 			SET policy.DefaultVersionId = $defaultVersionID
 			SET policy.updatedDate = $updatedDate
 		`
-		// TODO: PolicyVersionList
 
 		params := map[string]any{
 			"arn":              policy.Arn,
@@ -143,6 +170,16 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
 			m.logger.WithFields(logrus.Fields{"arn": policy.Arn}).Error(err)
 		}
+
+		for _, version := range policy.PolicyVersionList {
+			for _, document := range version.Document {
+				for _, statement := range document.Statement {
+					for _, action := range statement.Action {
+						m.mapAction(ctx, "TRUSTS", policy.Arn, action, statement.Effect)
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -152,10 +189,16 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		for _, policy := range role.AttachedManagedPolicies {
 			managedPolicies = append(managedPolicies, Policy{Arn: policy.PolicyArn, PolicyName: policy.PolicyName})
 		}
-		m.mapPolicies(ctx, managedPolicies)
+		for _, policy := range role.RolePolicyList {
+			arn := policy.PolicyArn
+			if arn == "" {
+				// if no arn, use name as key
+				arn = policy.PolicyName
+			}
+			managedPolicies = append(managedPolicies, Policy{Arn: arn, PolicyName: policy.PolicyName})
+		}
 
-		// TODO: idk if I should add policies here, probably just ->[:IS_PART_OF] or whatever
-		// probably create them before and in create user just link :D
+		m.mapPolicies(ctx, managedPolicies)
 
 		query := `
 		MERGE (role:Role {arn : $arn})
@@ -164,10 +207,6 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 			SET role.Path = $path
 			SET role.CreateDate = $createDate
 		`
-		// TODO: AssumeRolePolicyDocument
-		// InstanceProfileList
-		// RoleLastUsed
-		// RolePolicyList
 
 		params := map[string]any{
 			"arn":        role.Arn,
@@ -180,5 +219,88 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
 			m.logger.WithFields(logrus.Fields{"arn": role.Arn}).Error(err)
 		}
+
+		m.mapEntityPolicies(ctx, role.Arn, managedPolicies)
+
+		for _, version := range role.RolePolicyList {
+			for _, document := range *version.PolicyDocument {
+				for _, statement := range document.Statement {
+					for _, action := range statement.Action {
+						m.mapAction(ctx, "TRUSTS", role.Arn, action, statement.Effect)
+					}
+				}
+			}
+		}
+
+		for _, statement := range role.AssumeRolePolicyDocument.Statement {
+			for _, action := range statement.Action {
+				m.mapAction(ctx, "CAN_ASSUME", role.Arn, action, statement.Effect)
+			}
+		}
+
+		for _, instance := range role.InstanceProfileList {
+			for _, role := range instance.Roles {
+				for _, statement := range role.AssumeRolePolicyDocument.Statement {
+					for _, action := range statement.Action {
+						m.mapAction(ctx, "CAN_ASSUME", role.Arn, action, statement.Effect)
+					}
+				}
+			}
+		}
+	}
+}
+
+func (m *ResourceMapper) mapEntityPolicies(ctx context.Context, entityArn string, managedPolicies []Policy) {
+	for _, policy := range managedPolicies {
+		query := `
+		MATCH (entity {arn: $entityArn})
+		MATCH (policy:Policy {arn: $policyArn})
+		
+		MERGE (entity)-[:MANAGES]->(policy)
+		`
+
+		params := map[string]any{
+			"entityArn": entityArn,
+			"policyArn": policy.Arn,
+		}
+
+		if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
+			m.logger.WithFields(logrus.Fields{"entityArn": entityArn, "policyArn": policy.Arn}).Error(err)
+		}
+	}
+}
+
+func (m *ResourceMapper) mapRelationships(ctx context.Context) {
+	query := `
+	MATCH (u:User)
+	UNWIND u.GroupList AS groupName
+	MATCH (g:Group {GroupName: groupName})
+	MERGE (u)-[:MEMBER_OF]->(g)
+	`
+
+	if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, nil); err != nil {
+		m.logger.Error(err)
+	}
+}
+
+func (m *ResourceMapper) mapAction(ctx context.Context, entityActionEdge, arn, action, effect string) {
+	query := fmt.Sprintf(`
+	MERGE (action:action {action: $action})
+	WITH action
+
+	MATCH (entity {arn : $arn})
+	MERGE (entity)-[r:%s]->(action)
+
+	SET r.effect = $effect
+	`, entityActionEdge)
+
+	params := map[string]any{
+		"arn":    arn,
+		"action": action,
+		"effect": effect,
+	}
+
+	if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, params); err != nil {
+		m.logger.WithFields(logrus.Fields{"arn": arn, "action": action}).Error(err)
 	}
 }
