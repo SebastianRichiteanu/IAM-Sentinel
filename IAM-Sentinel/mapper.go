@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
@@ -20,6 +22,32 @@ func NewResourceMapper(logger *logrus.Logger, db *Neo4jConn, parser *Parser) (*R
 		parser: parser,
 	}
 	return &m, nil
+}
+
+func (m *ResourceMapper) MapFolder(ctx context.Context, dir string) error {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		fileName := file.Name()
+		filePath := filepath.Join(dir, fileName)
+
+		logFields := logrus.Fields{"file_name": fileName}
+		m.logger.Info("Reading file", logFields)
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			m.logger.Error("Could not read file", logFields)
+			continue
+		}
+
+		if err := m.MapFile(ctx, content); err != nil {
+			m.logger.Error("Could not map file", logFields)
+		}
+	}
+
+	return nil
 }
 
 func (m *ResourceMapper) MapFile(ctx context.Context, data []byte) error {

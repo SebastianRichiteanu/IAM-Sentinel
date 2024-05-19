@@ -1,0 +1,337 @@
+{
+    "UserDetailList": [
+        {
+            "Path": "/",
+            "UserName": "alice",
+            "UserId": "AIDAEXAMPLE67890",
+            "Arn": "arn:aws:iam::123456789012:user/alice",
+            "CreateDate": "2022-03-10T14:22:33Z",
+            "GroupList": [
+                "Engineering",
+                "Admins"
+            ],
+            "UserPolicyList": [
+                {
+                    "PolicyName": "UserReadOnlyPolicy",
+                    "PolicyDocument": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:GetObject",
+                                    "s3:ListBucket"
+                                ],
+                                "Resource": "*"
+                            }
+                        ]
+                    }]
+                }
+            ],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "AmazonS3ReadOnlyAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+                },
+                {
+                    "PolicyName": "AdministratorAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+                }
+            ],
+            "PermissionsBoundary": {
+                "PermissionsBoundaryType": "Policy",
+                "PermissionsBoundaryArn": "arn:aws:iam::123456789012:policy/PermissionsBoundaryPolicy"
+            },
+            "Tags": [
+                {
+                    "Key": "Department",
+                    "Value": "Engineering"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "ProjectX"
+                }
+            ]
+        },
+        {
+            "Path": "/",
+            "UserName": "bob",
+            "UserId": "AIDABOBEXAMPLE12345",
+            "Arn": "arn:aws:iam::123456789012:user/bob",
+            "CreateDate": "2021-11-01T11:20:30Z",
+            "GroupList": [
+                "QA",
+                "Developers"
+            ],
+            "UserPolicyList": [],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "AmazonEC2FullAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+                }
+            ],
+            "PermissionsBoundary": {
+                "PermissionsBoundaryType": "Policy",
+                "PermissionsBoundaryArn": "arn:aws:iam::123456789012:policy/PermissionsBoundaryPolicy"
+            },
+            "Tags": [
+                {
+                    "Key": "Department",
+                    "Value": "Quality Assurance"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "ProjectY"
+                }
+            ]
+        }
+    ],
+    "GroupDetailList": [
+        {
+            "Path": "/",
+            "GroupName": "Engineering",
+            "GroupId": "AGPAEXAMPLE56789",
+            "Arn": "arn:aws:iam::123456789012:group/Engineering",
+            "CreateDate": "2020-02-15T10:45:30Z",
+            "GroupPolicyList": [
+                {
+                    "PolicyName": "EngGroupPolicy",
+                    "PolicyDocument": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:ListBucket",
+                                    "ec2:DescribeInstances"
+                                ],
+                                "Resource": "*"
+                            }
+                        ]
+                    }]
+                }
+            ],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "AmazonS3FullAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+                }
+            ]
+        },
+        {
+            "Path": "/",
+            "GroupName": "QA",
+            "GroupId": "AGPAEXAMPLE98765",
+            "Arn": "arn:aws:iam::123456789012:group/QA",
+            "CreateDate": "2019-08-25T14:50:20Z",
+            "GroupPolicyList": [
+                {
+                    "PolicyName": "QAPolicy",
+                    "PolicyDocument": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "dynamodb:Scan",
+                                    "dynamodb:Query"
+                                ],
+                                "Resource": "*"
+                            }
+                        ]
+                    }]
+                }
+            ],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "AmazonDynamoDBReadOnlyAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess"
+                }
+            ]
+        }
+    ],
+    "RoleDetailList": [
+        {
+            "Path": "/service-role/",
+            "RoleName": "LambdaExecutionRole",
+            "RoleId": "AROAEXAMPLE67890",
+            "Arn": "arn:aws:iam::123456789012:role/service-role/LambdaExecutionRole",
+            "CreateDate": "2022-05-05T08:45:10Z",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": ["sts:AssumeRole"]
+                    }
+                ]
+            },
+            "InstanceProfileList": [],
+            "RolePolicyList": [
+                {
+                    "PolicyName": "LambdaBasicExecution",
+                    "PolicyDocument": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "logs:CreateLogGroup",
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                ],
+                                "Resource": "arn:aws:logs:*:*:*"
+                            }
+                        ]
+                    }]
+                }
+            ],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "service-role/AWSLambdaBasicExecutionRole",
+                    "PolicyArn": "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                }
+            ],
+            "PermissionsBoundary": null,
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Staging"
+                }
+            ]
+        },
+        {
+            "Path": "/",
+            "RoleName": "AdminRole",
+            "RoleId": "AROADMINEXAMPLE123",
+            "Arn": "arn:aws:iam::123456789012:role/AdminRole",
+            "CreateDate": "2019-12-01T12:00:00Z",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": "arn:aws:iam::123456789012:root"
+                        },
+                        "Action": ["sts:AssumeRole"]
+                    }
+                ]
+            },
+            "InstanceProfileList": [],
+            "RolePolicyList": [],
+            "AttachedManagedPolicies": [
+                {
+                    "PolicyName": "AdministratorAccess",
+                    "PolicyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+                }
+            ],
+            "PermissionsBoundary": null,
+            "Tags": [
+                {
+                    "Key": "Department",
+                    "Value": "Admin"
+                }
+            ]
+        }
+    ],
+    "Policies": [
+        {
+            "PolicyName": "PermissionsBoundaryPolicy",
+            "PolicyId": "POLICYEXAMPLE67890",
+            "Arn": "arn:aws:iam::123456789012:policy/PermissionsBoundaryPolicy",
+            "Path": "/",
+            "DefaultVersionId": "v1",
+            "AttachmentCount": 5,
+            "PermissionsBoundaryUsageCount": 3,
+            "IsAttachable": true,
+            "Description": "Permissions boundary policy to limit permissions",
+            "CreateDate": "2021-06-01T09:15:30Z",
+            "UpdateDate": "2021-06-01T09:15:30Z",
+            "PolicyVersionList": [
+                {
+                    "Document": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": ["*"],
+                                "Resource": "*",
+                                "Condition": {
+                                    "StringEquals": {
+                                        "aws:RequestedRegion": "us-west-2"
+                                    }
+                                }
+                            }
+                        ]
+                    }],
+                    "VersionId": "v1",
+                    "IsDefaultVersion": true,
+                    "CreateDate": "2021-06-01T09:15:30Z"
+                }
+            ]
+        },
+        {
+            "PolicyName": "S3BucketPolicy",
+            "PolicyId": "POLICYS3EXAMPLE123",
+            "Arn": "arn:aws:iam::123456789012:policy/S3BucketPolicy",
+            "Path": "/",
+            "DefaultVersionId": "v2",
+            "AttachmentCount": 7,
+            "PermissionsBoundaryUsageCount": 0,
+            "IsAttachable": true,
+            "Description": "Policy for S3 bucket access",
+            "CreateDate": "2020-07-12T13:25:40Z",
+            "UpdateDate": "2022-04-18T11:22:15Z",
+            "PolicyVersionList": [
+                {
+                    "Document": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:ListBucket",
+                                    "s3:GetObject"
+                                ],
+                                "Resource": [
+                                    "arn:aws:s3:::example-bucket",
+                                    "arn:aws:s3:::example-bucket/*"
+                                ]
+                            }
+                        ]
+                    }],
+                    "VersionId": "v1",
+                    "IsDefaultVersion": false,
+                    "CreateDate": "2020-07-12T13:25:40Z"
+                },
+                {
+                    "Document": [{
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:ListBucket",
+                                    "s3:GetObject",
+                                    "s3:PutObject"
+                                ],
+                                "Resource": [
+                                    "arn:aws:s3:::example-bucket",
+                                    "arn:aws:s3:::example-bucket/*"
+                                ]
+                            }
+                        ]
+                    }],
+                    "VersionId": "v2",
+                    "IsDefaultVersion": true,
+                    "CreateDate": "2022-04-18T11:22:15Z"
+                }
+            ]
+        }
+    ]
+}
+
