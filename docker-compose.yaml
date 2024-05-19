@@ -10,4 +10,5 @@ services:
       - ./neo4j/plugins:/plugins
     environment:
       NEO4J_AUTH: neo4j/sentinel
+      NEO4JLABS_PLUGINS: '["graph-data-science"]'
       # maybe raise limits and/or import apoc

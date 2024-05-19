@@ -39,17 +39,12 @@ func main() {
 		panic(err)
 	}
 
-	data, err := os.ReadFile("example.json")
-	if err != nil {
-		panic(err)
-	}
-
 	mapper, err := NewResourceMapper(logger, db, parser)
 	if err != nil {
 		panic(err)
 	}
 
-	if err = mapper.MapFile(ctx, data); err != nil {
+	if err = mapper.MapFolder(ctx, "examples"); err != nil {
 		panic(err)
 	}
 }
