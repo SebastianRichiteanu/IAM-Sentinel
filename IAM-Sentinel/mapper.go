@@ -83,7 +83,7 @@ func (m *ResourceMapper) mapUsers(ctx context.Context, users []UserDetail) {
 		m.mapPolicies(ctx, managedPolicies)
 
 		query := `
-		MERGE (user:User {arn : $arn})
+		MERGE (user:IAM:User {arn : $arn})
 			SET user.UserName = $userName
 			SET user.GroupList = $groups 
 			SET user.UserID = $userID
@@ -136,7 +136,7 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 		m.mapPolicies(ctx, managedPolicies)
 
 		query := `
-		MERGE (group:Group {arn : $arn})
+		MERGE (group:IAM:Group {arn : $arn})
 			SET group.GroupID = $groupID
 			SET group.GroupName = $groupName 
 			SET group.Path = $path
@@ -172,7 +172,7 @@ func (m *ResourceMapper) mapGroups(ctx context.Context, groups []GroupDetail) {
 func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 	for _, policy := range policies {
 		query := `
-		MERGE (policy:Policy {arn : $arn})
+		MERGE (policy:IAM:Policy {arn : $arn})
 			SET policy.PolicyID = $policyID
 			SET policy.PolicyName = $policyName 
 			SET policy.Path = $path
@@ -229,7 +229,7 @@ func (m *ResourceMapper) mapRoles(ctx context.Context, roles []RoleDetail) {
 		m.mapPolicies(ctx, managedPolicies)
 
 		query := `
-		MERGE (role:Role {arn : $arn})
+		MERGE (role:IAM:Role {arn : $arn})
 			SET role.RoleID = $roleID
 			SET role.RoleName = $roleName 
 			SET role.Path = $path
@@ -282,7 +282,7 @@ func (m *ResourceMapper) mapEntityPolicies(ctx context.Context, entityArn string
 	for _, policy := range managedPolicies {
 		query := `
 		MATCH (entity {arn: $entityArn})
-		MATCH (policy:Policy {arn: $policyArn})
+		MATCH (policy:IAM:Policy {arn: $policyArn})
 		
 		MERGE (entity)-[:MANAGES]->(policy)
 		`
@@ -300,7 +300,7 @@ func (m *ResourceMapper) mapEntityPolicies(ctx context.Context, entityArn string
 
 func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 	query := `
-	MATCH (u:User)
+	MATCH (u:IAM:User)
 	UNWIND u.GroupList AS groupName
 	MATCH (g:Group {GroupName: groupName})
 	MERGE (u)-[:MEMBER_OF]->(g)
@@ -313,7 +313,7 @@ func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 
 func (m *ResourceMapper) mapAction(ctx context.Context, entityActionEdge, arn, action, effect string) {
 	query := fmt.Sprintf(`
-	MERGE (action:action {action: $action})
+	MERGE (action:IAM:action {action: $action})
 	WITH action
 
 	MATCH (entity {arn : $arn})
