@@ -86,7 +86,7 @@ func main() {
 }
 
 // TODO: make exporter component?
-func exportNodes(logger *log.Logger, nodes CentralityNodes) {
+func exportNodes(logger *log.Logger, nodes []CentralityNode) {
 	for _, node := range nodes {
 		jsonBytes, err := json.Marshal(node)
 		if err != nil {
