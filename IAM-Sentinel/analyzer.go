@@ -29,40 +29,37 @@ func NewAnalyzer(logger *logrus.Logger, db *Neo4jConn) (*Analyzer, error) {
 	return &a, nil
 }
 
-func (a *Analyzer) GetNodeList(ctx context.Context, ids []int64) CentralityNodes {
-	var nodes CentralityNodes
-
-	query := `MATCH(n) WHERE id(n) in $ids RETURN n`
-
-	params := map[string]any{"ids": ids}
+func (a *Analyzer) GetNodeJSON(ctx context.Context, id int64) *NodeJSON {
+	query := `MATCH(n) WHERE id(n) = $id RETURN n`
+	params := map[string]any{"id": id}
 
 	results, err := a.dbConn.ExecuteQueryRead(ctx, query, params)
 	if err != nil {
 		a.logger.Error(err)
 	}
 
-	for _, result := range results {
-		nodeAsResult, ok := result.Get("n")
-		if !ok {
-			a.logger.Error("could not get node for node map: %w", err)
-			continue
-		}
-
-		node, ok := nodeAsResult.(neo4j.Node)
-		if !ok {
-			a.logger.Error("could not map result to node: %w", err)
-			continue
-		}
-
-		jsonNode := NodeJSON{
-			ID:     node.GetId(),
-			Labels: node.Labels,
-			Props:  node.Props,
-		}
-
-		nodes = append(nodes, jsonNode)
+	if len(results) == 0 {
+		a.logger.Error("could not find node", "id", id)
+		return nil
 	}
-	return nodes
+
+	nodeAsResult, ok := results[0].Get("n")
+	if !ok {
+		a.logger.Error("could not get node for node map: %w", err)
+		return nil
+	}
+
+	node, ok := nodeAsResult.(neo4j.Node)
+	if !ok {
+		a.logger.Error("could not map result to node: %w", err)
+		return nil
+	}
+
+	return &NodeJSON{
+		ID:     node.GetId(),
+		Labels: node.Labels,
+		Props:  node.Props,
+	}
 }
 
 func (a *Analyzer) ProjectGraph(ctx context.Context, projection Projection) {
@@ -79,10 +76,10 @@ func (a *Analyzer) ProjectGraph(ctx context.Context, projection Projection) {
 	}
 }
 
-func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projection Projection, noNodes int) CentralityNodes {
+func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projection Projection, noNodes int) []CentralityNode {
 	query := fmt.Sprintf(`
 	CALL gds.%s.stream($graph_name, {}) YIELD nodeId, score
-	RETURN nodeId, score
+	RETURN nodeId as id, score as score
 	ORDER BY score DESC
 	LIMIT $limit_nr`, centralityType)
 
@@ -96,11 +93,30 @@ func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projec
 		a.logger.Error(err)
 	}
 
-	var ids []int64
+	var nodes []CentralityNode
 
 	for _, result := range results {
-		ids = append(ids, result.Values[0].(int64))
+		id, ok := result.Get("id")
+		if !ok {
+			continue
+		}
+		score, ok := result.Get("score")
+		if !ok {
+			continue
+		}
+
+		node := a.GetNodeJSON(ctx, id.(int64))
+		if node == nil {
+			continue
+		}
+
+		newNode := CentralityNode{
+			Score: score.(float64),
+			Node:  *node,
+		}
+
+		nodes = append(nodes, newNode)
 	}
 
-	return a.GetNodeList(ctx, ids)
+	return nodes
 }
