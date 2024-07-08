@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	queryPurgeDB           = "MATCH(n) DETACH DELETE(n)"
+	queryPurgeNodes        = "MATCH(n) DETACH DELETE(n)"
+	queryPurgeProjections  = "CALL gds.graph.drop($graph_name) YIELD graphName RETURN graphName"
 	createUserConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:User) REQUIRE n.arn IS UNIQUE;"
 	createRoleConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Role) REQUIRE n.arn IS UNIQUE;"
 	createPolicyConstraint = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Policy) REQUIRE n.arn IS UNIQUE;"
@@ -22,17 +23,27 @@ var (
 	createConstraints = []string{createUserConstraint, createRoleConstraint, createPolicyConstraint, createGroupConstraint}
 )
 
-type Neo4jConn struct {
-	config Neo4jConfig
-	driver neo4j.DriverWithContext
-}
+type (
+	Neo4jConn struct {
+		config Neo4jConfig
+		driver neo4j.DriverWithContext
+	}
 
-type Neo4jConfig struct {
-	username string
-	password string
-	uri      string
-	database string
-}
+	Neo4jConfig struct {
+		username string
+		password string
+		uri      string
+		database string
+	}
+
+	NodeJSON struct {
+		ID     int64                  `json:"id"`
+		Labels []string               `json:"labels"`
+		Props  map[string]interface{} `json:"properties"`
+	}
+
+	CentralityNodes []NodeJSON
+)
 
 func InitializeDB(ctx context.Context, config Neo4jConfig) (*Neo4jConn, error) {
 	driver, err := neo4j.NewDriverWithContext(config.uri, neo4j.BasicAuth(config.username, config.password, ""))
@@ -76,7 +87,12 @@ func (neo Neo4jConn) ExecuteQueryWrite(ctx context.Context, query string, params
 }
 
 func (neo Neo4jConn) PurgeDB(ctx context.Context) error {
-	_, err := neo.ExecuteQueryWrite(ctx, queryPurgeDB, nil)
+	_, err := neo.ExecuteQueryWrite(ctx, queryPurgeNodes, nil)
+	if err != nil {
+		return fmt.Errorf("could not purge neo4j db: %w", err)
+	}
+
+	_, err = neo.ExecuteQueryWrite(ctx, queryPurgeProjections, map[string]any{"graph_name": DefaultGraphProjectionName})
 	if err != nil {
 		return fmt.Errorf("could not purge neo4j db: %w", err)
 	}
