@@ -35,15 +35,15 @@ func (m *ResourceMapper) MapFolder(ctx context.Context, dir string) error {
 		filePath := filepath.Join(dir, fileName)
 
 		logFields := logrus.Fields{"file_name": fileName}
-		m.logger.Info("Reading file", logFields)
+		m.logger.WithFields(logFields).Info("Reading file")
 		content, err := os.ReadFile(filePath)
 		if err != nil {
-			m.logger.Error("Could not read file", logFields)
+			m.logger.WithFields(logFields).Error("Could not read file")
 			continue
 		}
 
 		if err := m.MapFile(ctx, content); err != nil {
-			m.logger.Error("Could not map file", logFields)
+			m.logger.WithFields(logFields).Error("Could not map file")
 		}
 	}
 

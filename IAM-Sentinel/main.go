@@ -2,67 +2,35 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"os"
-
-	log "github.com/sirupsen/logrus"
 )
-
-const (
-	DefaultGraphProjectionName = "fullGraph"
-)
-
-var (
-	DefaultNodeProjectionNames = []string{"IAM"}
-	DefaultRelProjectionNames  = []string{"*"}
-)
-
-func initLogger() *log.Logger {
-	logger := log.New()
-	logger.Out = os.Stdout
-	logger.Level = log.InfoLevel
-	return logger
-}
 
 func main() {
 	ctx := context.Background()
-	logger := initLogger()
 
-	logger.Info("Starting...")
+	cfg := SentinelConfig{
+		neo4jConfig: &Neo4jConfig{
+			uri:      "bolt://localhost:7687",
+			username: "neo4j",
+			password: "sentinel",
+			database: "neo4j",
+		},
+		exportPath:   "./export/",
+		defaultLimit: 5,
+	}
 
-	db, err := InitializeDB(ctx, Neo4jConfig{
-		uri:      "bolt://localhost:7687",
-		username: "neo4j",
-		password: "sentinel",
-		database: "neo4j"}) // TODO: move this to env params or config or something else :)
+	sentinel, err := NewSentinel(ctx, cfg)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Stop(ctx)
+	defer sentinel.stop(ctx)
 
-	// Clear
-	if err := db.PurgeDB(ctx); err != nil {
+	sentinel.logger.Info("Purging DB...")
+	if err := sentinel.dbConn.PurgeDB(ctx); err != nil {
 		panic(err)
 	}
 
-	// Parse
-	parser, err := NewParser(logger)
-	if err != nil {
-		panic(err)
-	}
-
-	mapper, err := NewResourceMapper(logger, db, parser)
-	if err != nil {
-		panic(err)
-	}
-
-	if err = mapper.MapFolder(ctx, "examples"); err != nil {
-		panic(err)
-	}
-
-	// Analyze
-	analyzer, err := NewAnalyzer(logger, db)
-	if err != nil {
+	sentinel.logger.Info("Mapping folder...")
+	if err = sentinel.mapper.MapFolder(ctx, "examples"); err != nil {
 		panic(err)
 	}
 
@@ -72,26 +40,25 @@ func main() {
 		relProjection:  DefaultRelProjectionNames,
 	}
 
-	analyzer.ProjectGraph(ctx, fullProjection)
+	sentinel.logger.Info("Projecting graph...")
+	sentinel.analyzer.ProjectGraph(ctx, fullProjection)
 
-	betweenesList := analyzer.Centrality(ctx, "betweenness", fullProjection, 5)
-	closenessList := analyzer.Centrality(ctx, "closeness", fullProjection, 5)
-	eigenvectorList := analyzer.Centrality(ctx, "eigenvector", fullProjection, 5)
-	degreeList := analyzer.Centrality(ctx, "degree", fullProjection, 5)
+	sentinel.logger.Info("Analyzing centrality...")
 
-	exportNodes(logger, betweenesList)
-	exportNodes(logger, closenessList)
-	exportNodes(logger, eigenvectorList)
-	exportNodes(logger, degreeList)
-}
+	betweenesList := sentinel.analyzer.Centrality(ctx, "betweenness", fullProjection, 5)
+	closenessList := sentinel.analyzer.Centrality(ctx, "closeness", fullProjection, 5)
+	eigenvectorList := sentinel.analyzer.Centrality(ctx, "eigenvector", fullProjection, 5)
+	degreeList := sentinel.analyzer.Centrality(ctx, "degree", fullProjection, 5)
 
-// TODO: make exporter component?
-func exportNodes(logger *log.Logger, nodes []CentralityNode) {
-	for _, node := range nodes {
-		jsonBytes, err := json.Marshal(node)
-		if err != nil {
-			log.Fatal(err)
-		}
-		logger.Info(string(jsonBytes))
-	}
+	sentinel.logger.Info("Exporting...")
+
+	// sentinel.exporter.logNodes(betweenesList)
+	// sentinel.exporter.logNodes(closenessList)
+	// sentinel.exporter.logNodes(eigenvectorList)
+	// sentinel.exporter.logNodes(degreeList)
+
+	sentinel.exporter.writeToFile(betweenesList, "betweenness.json")
+	sentinel.exporter.writeToFile(closenessList, "closeness.json")
+	sentinel.exporter.writeToFile(eigenvectorList, "eigenvector.json")
+	sentinel.exporter.writeToFile(degreeList, "degree.json")
 }

@@ -10,8 +10,9 @@ import (
 
 type (
 	Analyzer struct {
-		logger *logrus.Logger
-		dbConn *Neo4jConn
+		logger       *logrus.Logger
+		dbConn       *Neo4jConn
+		defaultLimit int
 	}
 
 	Projection struct {
@@ -21,10 +22,11 @@ type (
 	}
 )
 
-func NewAnalyzer(logger *logrus.Logger, db *Neo4jConn) (*Analyzer, error) {
+func NewAnalyzer(logger *logrus.Logger, db *Neo4jConn, defaultLimit int) (*Analyzer, error) {
 	a := Analyzer{
-		logger: logger,
-		dbConn: db,
+		logger:       logger,
+		dbConn:       db,
+		defaultLimit: defaultLimit,
 	}
 	return &a, nil
 }
