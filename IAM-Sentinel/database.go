@@ -35,18 +35,6 @@ type (
 		uri      string
 		database string
 	}
-
-	// TODO: move to types?
-	NodeJSON struct {
-		ID     int64                  `json:"id"`
-		Labels []string               `json:"labels"`
-		Props  map[string]interface{} `json:"properties"`
-	}
-
-	CentralityNode struct {
-		Score float64  `json:"score"`
-		Node  NodeJSON `json:"node"`
-	}
 )
 
 func InitializeDB(ctx context.Context, config Neo4jConfig) (*Neo4jConn, error) {

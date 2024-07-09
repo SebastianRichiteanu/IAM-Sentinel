@@ -2,7 +2,27 @@ package main
 
 import "time"
 
+const (
+	DefaultGraphProjectionName = "fullGraph"
+)
+
+var (
+	DefaultNodeProjectionNames = []string{"IAM"}
+	DefaultRelProjectionNames  = []string{"*"}
+)
+
 type (
+	NodeJSON struct {
+		ID     int64                  `json:"id"`
+		Labels []string               `json:"labels"`
+		Props  map[string]interface{} `json:"properties"`
+	}
+
+	CentralityNode struct {
+		Score float64  `json:"score"`
+		Node  NodeJSON `json:"node"`
+	}
+
 	// get-account-authorization-details structure
 	// https://docs.aws.amazon.com/cli/latest/reference/iam/get-account-authorization-details.html
 	GAAD struct {
