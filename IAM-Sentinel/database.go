@@ -84,10 +84,8 @@ func (neo Neo4jConn) PurgeDB(ctx context.Context) error {
 		return fmt.Errorf("could not purge neo4j db: %w", err)
 	}
 
-	_, err = neo.ExecuteQueryWrite(ctx, queryPurgeProjections, map[string]any{"graph_name": DefaultGraphProjectionName})
-	if err != nil {
-		return fmt.Errorf("could not purge neo4j db: %w", err)
-	}
+	// TODO if in query
+	_, _ = neo.ExecuteQueryWrite(ctx, queryPurgeProjections, map[string]any{"graph_name": DefaultGraphProjectionName})
 
 	for _, constraint := range createConstraints {
 		_, err = neo.ExecuteQueryWrite(ctx, constraint, nil)
