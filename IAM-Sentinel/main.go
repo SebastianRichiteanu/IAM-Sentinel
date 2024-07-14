@@ -61,4 +61,7 @@ func main() {
 	sentinel.exporter.writeToFile(closenessList, "closeness.json")
 	sentinel.exporter.writeToFile(eigenvectorList, "eigenvector.json")
 	sentinel.exporter.writeToFile(degreeList, "degree.json")
+
+	// TODO: community: CALL gds.louvain.stream('fullGraph', {})
+
 }
