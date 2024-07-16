@@ -122,3 +122,51 @@ func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projec
 
 	return nodes
 }
+
+func (a *Analyzer) CommunityLouvain(ctx context.Context, projection Projection) any { // TODO: tighten
+	query := `CALL gds.louvain.stream($graph_name, {}) YIELD nodeId, communityId, intermediateCommunityIds`
+
+	params := map[string]any{
+		"graph_name": projection.graphName,
+	}
+
+	results, err := a.dbConn.ExecuteQueryRead(ctx, query, params)
+	if err != nil {
+		a.logger.Error(err)
+	}
+
+	var nodes []LouvainNode
+
+	for _, result := range results {
+		id, ok := result.Get("nodeId")
+		if !ok {
+			continue
+		}
+		communityId, ok := result.Get("communityId")
+		if !ok {
+			continue
+		}
+		intermediateCommunityIds, ok := result.Get("intermediateCommunityIds")
+		if !ok {
+			continue
+		}
+
+		node := a.GetNodeJSON(ctx, id.(int64))
+		if node == nil {
+			continue
+		}
+
+		newNode := LouvainNode{
+			Node:        *node,
+			CommunityID: communityId.(int64),
+		}
+
+		if intermediateCommunityIds != nil {
+			newNode.IntermediateCommunityIDs = intermediateCommunityIds.([]int64)
+		}
+
+		nodes = append(nodes, newNode)
+	}
+
+	return nodes
+}

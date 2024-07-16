@@ -23,6 +23,15 @@ type (
 		Node  NodeJSON `json:"node"`
 	}
 
+	// nodeId: Integer,
+	// communityId: Integer,
+	// intermediateCommunityIds: List of Integer
+	LouvainNode struct {
+		Node                     NodeJSON `json:"node"`
+		CommunityID              int64    `json:"communityID"`
+		IntermediateCommunityIDs []int64  `json:"intermediateCommunityID"`
+	}
+
 	// get-account-authorization-details structure
 	// https://docs.aws.amazon.com/cli/latest/reference/iam/get-account-authorization-details.html
 	GAAD struct {

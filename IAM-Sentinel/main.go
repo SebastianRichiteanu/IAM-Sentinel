@@ -50,18 +50,20 @@ func main() {
 	eigenvectorList := sentinel.analyzer.Centrality(ctx, "eigenvector", fullProjection, 5)
 	degreeList := sentinel.analyzer.Centrality(ctx, "degree", fullProjection, 5)
 
+	louvain := sentinel.analyzer.CommunityLouvain(ctx, fullProjection)
+
 	sentinel.logger.Info("Exporting...")
 
 	// sentinel.exporter.logNodes(betweenesList)
 	// sentinel.exporter.logNodes(closenessList)
 	// sentinel.exporter.logNodes(eigenvectorList)
 	// sentinel.exporter.logNodes(degreeList)
+	// sentinel.exporter.logNodes(louvain)
 
 	sentinel.exporter.writeToFile(betweenesList, "betweenness.json")
 	sentinel.exporter.writeToFile(closenessList, "closeness.json")
 	sentinel.exporter.writeToFile(eigenvectorList, "eigenvector.json")
 	sentinel.exporter.writeToFile(degreeList, "degree.json")
 
-	// TODO: community: CALL gds.louvain.stream('fullGraph', {})
-
+	sentinel.exporter.writeToFile(louvain, "louvain.json")
 }

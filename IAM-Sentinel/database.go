@@ -9,8 +9,14 @@ import (
 )
 
 const (
-	queryPurgeNodes        = "MATCH(n) DETACH DELETE(n)"
-	queryPurgeProjections  = "CALL gds.graph.drop($graph_name) YIELD graphName RETURN graphName"
+	queryPurgeNodes       = "MATCH(n) DETACH DELETE(n)"
+	queryPurgeProjections = `
+CALL apoc.do.when(
+  gds.graph.exists('%s'),
+  'CALL gds.graph.drop(\'%s\')',
+  ''
+) YIELD value
+RETURN value`
 	createUserConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:User) REQUIRE n.arn IS UNIQUE;"
 	createRoleConstraint   = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Role) REQUIRE n.arn IS UNIQUE;"
 	createPolicyConstraint = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Policy) REQUIRE n.arn IS UNIQUE;"
@@ -84,8 +90,10 @@ func (neo Neo4jConn) PurgeDB(ctx context.Context) error {
 		return fmt.Errorf("could not purge neo4j db: %w", err)
 	}
 
-	// TODO if in query
-	_, _ = neo.ExecuteQueryWrite(ctx, queryPurgeProjections, map[string]any{"graph_name": DefaultGraphProjectionName})
+	_, err = neo.ExecuteQueryWrite(ctx, fmt.Sprintf(queryPurgeProjections, DefaultGraphProjectionName, DefaultGraphProjectionName), nil)
+	if err != nil {
+		return fmt.Errorf("could not purge neo4j db: %w", err)
+	}
 
 	for _, constraint := range createConstraints {
 		_, err = neo.ExecuteQueryWrite(ctx, constraint, nil)

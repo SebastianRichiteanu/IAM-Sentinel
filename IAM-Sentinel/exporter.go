@@ -35,7 +35,7 @@ func (e *Exporter) logNodes(nodes []CentralityNode) {
 	}
 }
 
-func (e *Exporter) writeToFile(nodes []CentralityNode, fileName string) {
+func (e *Exporter) writeToFile(nodes any, fileName string) {
 	jsonBytes, err := json.MarshalIndent(nodes, "", "  ")
 	if err != nil {
 		e.logger.Error(err)
