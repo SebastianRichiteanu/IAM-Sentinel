@@ -15,7 +15,7 @@ func main() {
 			database: "neo4j",
 		},
 		exportPath:   "./export/",
-		defaultLimit: 5,
+		defaultLimit: 10,
 	}
 
 	sentinel, err := NewSentinel(ctx, cfg)
@@ -50,7 +50,8 @@ func main() {
 	eigenvectorList := sentinel.analyzer.Centrality(ctx, "eigenvector", fullProjection, 5)
 	degreeList := sentinel.analyzer.Centrality(ctx, "degree", fullProjection, 5)
 
-	louvain := sentinel.analyzer.CommunityLouvain(ctx, fullProjection)
+	louvain := sentinel.analyzer.Community(ctx, "louvain", fullProjection)
+	modOpt := sentinel.analyzer.Community(ctx, "modularityOptimization", fullProjection)
 
 	sentinel.logger.Info("Exporting...")
 
@@ -66,4 +67,5 @@ func main() {
 	sentinel.exporter.writeToFile(degreeList, "degree.json")
 
 	sentinel.exporter.writeToFile(louvain, "louvain.json")
+	sentinel.exporter.writeToFile(modOpt, "modOpt.json")
 }

@@ -31,39 +31,6 @@ func NewAnalyzer(logger *logrus.Logger, db *Neo4jConn, defaultLimit int) (*Analy
 	return &a, nil
 }
 
-func (a *Analyzer) GetNodeJSON(ctx context.Context, id int64) *NodeJSON {
-	query := `MATCH(n) WHERE id(n) = $id RETURN n`
-	params := map[string]any{"id": id}
-
-	results, err := a.dbConn.ExecuteQueryRead(ctx, query, params)
-	if err != nil {
-		a.logger.Error(err)
-	}
-
-	if len(results) == 0 {
-		a.logger.Error("could not find node", "id", id)
-		return nil
-	}
-
-	nodeAsResult, ok := results[0].Get("n")
-	if !ok {
-		a.logger.Error("could not get node for node map: %w", err)
-		return nil
-	}
-
-	node, ok := nodeAsResult.(neo4j.Node)
-	if !ok {
-		a.logger.Error("could not map result to node: %w", err)
-		return nil
-	}
-
-	return &NodeJSON{
-		ID:     node.GetId(),
-		Labels: node.Labels,
-		Props:  node.Props,
-	}
-}
-
 func (a *Analyzer) ProjectGraph(ctx context.Context, projection Projection) {
 	query := `CALL gds.graph.project($graph_name,$node_projection,$rel_projection)`
 
@@ -81,7 +48,7 @@ func (a *Analyzer) ProjectGraph(ctx context.Context, projection Projection) {
 func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projection Projection, noNodes int) []CentralityNode {
 	query := fmt.Sprintf(`
 	CALL gds.%s.stream($graph_name, {}) YIELD nodeId, score
-	RETURN nodeId as id, score as score
+	RETURN gds.util.asNode(nodeId) as node, score as score
 	ORDER BY score DESC
 	LIMIT $limit_nr`, centralityType)
 
@@ -98,23 +65,27 @@ func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projec
 	var nodes []CentralityNode
 
 	for _, result := range results {
-		id, ok := result.Get("id")
+		nodeField, ok := result.Get("node")
 		if !ok {
-			continue
-		}
-		score, ok := result.Get("score")
-		if !ok {
+			a.logger.WithField("centralityType", centralityType).Warn("could not get node result")
 			continue
 		}
 
-		node := a.GetNodeJSON(ctx, id.(int64))
-		if node == nil {
+		node, ok := nodeField.(neo4j.Node)
+		if !ok {
+			a.logger.WithField("centralityType", centralityType).Warn("could not cast node result")
+			continue
+		}
+
+		score, ok := result.Get("score")
+		if !ok {
+			a.logger.WithField("centralityType", centralityType).Warn("could not get score")
 			continue
 		}
 
 		newNode := CentralityNode{
 			Score: score.(float64),
-			Node:  *node,
+			Node:  &node,
 		}
 
 		nodes = append(nodes, newNode)
@@ -123,8 +94,12 @@ func (a *Analyzer) Centrality(ctx context.Context, centralityType string, projec
 	return nodes
 }
 
-func (a *Analyzer) CommunityLouvain(ctx context.Context, projection Projection) any { // TODO: tighten
-	query := `CALL gds.louvain.stream($graph_name, {}) YIELD nodeId, communityId, intermediateCommunityIds`
+func (a *Analyzer) Community(ctx context.Context, communityType string, projection Projection) CommunityMap {
+	query := fmt.Sprintf(`
+	CALL gds.%s.stream($graph_name, {}) 
+	YIELD nodeId, communityId
+	RETURN gds.util.asNode(nodeId) as node, communityId as communityId
+	`, communityType)
 
 	params := map[string]any{
 		"graph_name": projection.graphName,
@@ -135,38 +110,34 @@ func (a *Analyzer) CommunityLouvain(ctx context.Context, projection Projection) 
 		a.logger.Error(err)
 	}
 
-	var nodes []LouvainNode
+	communities := make(CommunityMap)
 
 	for _, result := range results {
-		id, ok := result.Get("nodeId")
+		nodeField, ok := result.Get("node")
 		if !ok {
+			a.logger.WithField("communityType", communityType).Warn("could not get node result")
 			continue
 		}
-		communityId, ok := result.Get("communityId")
+
+		node, ok := nodeField.(neo4j.Node)
 		if !ok {
+			a.logger.WithField("communityType", communityType).Warn("could not cast node result")
 			continue
 		}
-		intermediateCommunityIds, ok := result.Get("intermediateCommunityIds")
+
+		communityIdField, ok := result.Get("communityId")
 		if !ok {
+			a.logger.WithField("communityType", communityType).Warn("could not get communityID")
+			continue
+		}
+		communityId, ok := communityIdField.(int64)
+		if !ok {
+			a.logger.WithField("communityType", communityType).Warn("could not cast communityID")
 			continue
 		}
 
-		node := a.GetNodeJSON(ctx, id.(int64))
-		if node == nil {
-			continue
-		}
-
-		newNode := LouvainNode{
-			Node:        *node,
-			CommunityID: communityId.(int64),
-		}
-
-		if intermediateCommunityIds != nil {
-			newNode.IntermediateCommunityIDs = intermediateCommunityIds.([]int64)
-		}
-
-		nodes = append(nodes, newNode)
+		communities[communityId] = append(communities[communityId], &node)
 	}
 
-	return nodes
+	return communities
 }

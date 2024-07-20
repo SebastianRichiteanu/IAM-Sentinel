@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+)
 
 const (
 	DefaultGraphProjectionName = "fullGraph"
@@ -12,25 +16,12 @@ var (
 )
 
 type (
-	NodeJSON struct {
-		ID     int64                  `json:"id"`
-		Labels []string               `json:"labels"`
-		Props  map[string]interface{} `json:"properties"`
-	}
-
 	CentralityNode struct {
-		Score float64  `json:"score"`
-		Node  NodeJSON `json:"node"`
+		Score float64     `json:"score"`
+		Node  *neo4j.Node `json:"node"`
 	}
 
-	// nodeId: Integer,
-	// communityId: Integer,
-	// intermediateCommunityIds: List of Integer
-	LouvainNode struct {
-		Node                     NodeJSON `json:"node"`
-		CommunityID              int64    `json:"communityID"`
-		IntermediateCommunityIDs []int64  `json:"intermediateCommunityID"`
-	}
+	CommunityMap map[int64][]*neo4j.Node
 
 	// get-account-authorization-details structure
 	// https://docs.aws.amazon.com/cli/latest/reference/iam/get-account-authorization-details.html
