@@ -313,7 +313,7 @@ func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 
 func (m *ResourceMapper) mapAction(ctx context.Context, entityActionEdge, arn, action, effect string) {
 	query := fmt.Sprintf(`
-	MERGE (action:IAM:action {action: $action})
+	MERGE (action:IAM:Action {action: $action})
 	WITH action
 
 	MATCH (entity {arn : $arn})
