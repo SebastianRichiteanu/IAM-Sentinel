@@ -180,7 +180,7 @@ func (m *ResourceMapper) mapPolicies(ctx context.Context, policies []Policy) {
 			SET policy.AttachementCount = $attachementCount
 			SET policy.IsAttachable = $isAttachable
 			SET policy.DefaultVersionId = $defaultVersionID
-			SET policy.updatedDate = $updatedDate
+			SET policy.UpdatedDate = $updatedDate
 		`
 
 		params := map[string]any{
@@ -313,7 +313,7 @@ func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 
 func (m *ResourceMapper) mapAction(ctx context.Context, entityActionEdge, arn, action, effect string) {
 	query := fmt.Sprintf(`
-	MERGE (action:IAM:Action {action: $action})
+	MERGE (action:IAM:Action {Action: $action})
 	WITH action
 
 	MATCH (entity {arn : $arn})
