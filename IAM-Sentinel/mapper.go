@@ -303,7 +303,7 @@ func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 	MATCH (u:IAM:User)
 	UNWIND u.GroupList AS groupName
 	MATCH (g:Group {GroupName: groupName})
-	MERGE (u)-[:MEMBER_OF]->(g)
+	MERGE (u)<-[:HAS_MEMBER]-(g)
 	`
 
 	if _, err := m.dbConn.ExecuteQueryWrite(ctx, query, nil); err != nil {
@@ -313,7 +313,7 @@ func (m *ResourceMapper) mapRelationships(ctx context.Context) {
 
 func (m *ResourceMapper) mapAction(ctx context.Context, entityActionEdge, arn, action, effect string) {
 	query := fmt.Sprintf(`
-	MERGE (action:IAM:Action {Action: $action})
+	MERGE (action:IAM:Action {action: $action})
 	WITH action
 
 	MATCH (entity {arn : $arn})

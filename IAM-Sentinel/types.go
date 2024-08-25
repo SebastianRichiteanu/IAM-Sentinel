@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	DefaultNodeProjectionNames = []string{"IAM"}
+	DefaultNodeProjectionNames = []string{"IAM", "User", "Role", "Policy", "Group", "IAM", "Action"} // TODO: maybe use *
 	DefaultRelProjectionNames  = []string{"*"}
 )
 
