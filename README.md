@@ -8,8 +8,8 @@ This project was developed as part of my masters's thesis in Cyber Security. For
 
 The tool uses a neo4j database to store the information. One can be spinned up using docker and the provided docker-compose file: ```docker-compose up -d```.
 
-The ingestion files have to be placed inside the `examples` folder, you can change this folder inside the code, alogside with the database credentials.
+The ingestion files have to be placed inside the `examples` folder, you can change this folder inside the code, alongside with the database credentials.
 
 To run the tool simply execute `go run .`
 
-Afterwards, one can query and visualize the data in Neo4j's UI, the default address is `localhost:7474`. 
+Afterwards, the data can be queried and visualized in Neo4j's UI, the default address is `localhost:7474`. 
